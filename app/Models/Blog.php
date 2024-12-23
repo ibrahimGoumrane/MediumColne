@@ -13,7 +13,7 @@ class Blog extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class,'creator_id');
     }
     public function  comments()
     {
@@ -25,6 +25,6 @@ class Blog extends Model
     }
     public function categories()
     {
-        return $this->hasMany(Category::class);
+        return $this->belongsToMany(Category::class,'blog_categories','blog_id','category_id');
     }
 }

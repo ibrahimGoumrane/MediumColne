@@ -35,9 +35,11 @@ class BlogPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Blog $blog): bool
+    public function update(User $user, Blog $blog): Response
     {
-        //
+        return $user->id === $blog->user_id
+            ? Response::allow()
+            : Response::deny('You do not own this Blog');
     }
 
     /**

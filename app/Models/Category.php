@@ -11,6 +11,6 @@ class Category extends Model
     protected $guarded = [];
 
     public function blogs(){
-        return $this->hasMany(Blog::class);
+        return $this->belongsToMany(Blog::class,'blog_categories','blog_id','category_id');
     }
 }
