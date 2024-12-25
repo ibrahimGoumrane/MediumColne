@@ -7,25 +7,28 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 
 class BlogController extends Controller implements HasMiddleware
 {
-
-    public static function middleware(){
-    return [
-        new Middleware('auth:sanctum', except: ['index', 'show'])
-    ];
-}
+    public static function middleware()
+    {
+        return [
+            new Middleware('auth:sanctum', except: ['index', 'show']),
+        ];
+    }
 
     public function index()
     {
-        return Blog::with(['user', 'likes', 'comments'])->latest()->paginate(10);
+            $blogs = Blog::with(['user', 'likes', 'comments'])->latest()->paginate(10);
+            return response()->json([
+                'message' => 'Blogs retrieved successfully.',
+                'blog' => $blogs,
+            ], 200);
+
     }
 
     public function store(Request $request)
     {
-        try {
             $validated = $request->validate([
                 'title' => 'required|string|unique:blogs,title|max:255',
                 'description' => 'nullable|string|max:500',
@@ -49,30 +52,24 @@ class BlogController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Blog created successfully.',
-                'blog' => $blog->load(['user', 'likes', 'comments','categories']),
+                'blog' => $blog->load(['user', 'likes', 'comments', 'categories']),
             ], 201);
 
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json([
-                'message' => 'An unexpected error occurred.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
     }
 
     public function show(Blog $blog)
     {
-        return response()->json([
-            'blog' => $blog->load(['user', 'likes', 'comments','categories']),
-        ]);
+            return response()->json([
+                'message' => 'Blog retrieved successfully.',
+                'blog' => $blog->load(['user', 'likes', 'comments', 'categories']),
+            ], 200);
+
     }
 
     public function update(Request $request, Blog $blog)
     {
-        Gate::authorize('update', $blog);
+            Gate::authorize('update', $blog);
 
-        try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255|unique:blogs,title,' . $blog->id,
                 'description' => 'nullable|string|max:500',
@@ -93,26 +90,24 @@ class BlogController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Blog updated successfully.',
-                'blog' => $blog->load(['user', 'likes', 'comments','categories']),
-            ]);
+                'blog' => $blog->load(['user', 'likes', 'comments', 'categories']),
+            ], 200);
 
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json([
-                'message' => 'An unexpected error occurred.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
     }
 
     public function destroy(Blog $blog)
     {
-        Gate::authorize('modify', $blog);
+            Gate::authorize('update', $blog);
 
-        $blog->delete();
+            $blog->delete();
 
-        return response()->json([
-            'message' => 'Blog deleted successfully.',
-        ]);
+            return response()->json([
+                'message' => 'Blog deleted successfully.',
+            ], 200);
     }
+
+    /**
+     * Handle exceptions and format error responses.
+     */
+
 }

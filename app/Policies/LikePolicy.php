@@ -35,9 +35,11 @@ class LikePolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Like $like): bool
+    public function update(User $user, Like $like): Response
     {
-        //
+        return $user->id === $like->user_id
+            ? Response::allow()
+            : Response::deny('You do not own this Blog');
     }
 
     /**

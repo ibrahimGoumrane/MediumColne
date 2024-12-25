@@ -3,25 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Http\Requests\StoreCategoryRequest;
-use App\Http\Requests\UpdateCategoryRequest;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class CategoryController extends Controller
+class CategoryController extends Controller  implements HasMiddleware
 {
+    public static function middleware()
+    {
+        return [
+            new Middleware('auth:sanctum', only: ['update', 'destroy']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        return Category::all();
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCategoryRequest $request)
+    public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+        ]);
+        $category = Category::create($validated);
+        return response()->json([
+            'message'=>'Category created successfully',
+            'category'=>$category
+        ], 201);
     }
 
     /**
@@ -29,15 +44,24 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        //
+        return response()->json([
+            'category'=>$category,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCategoryRequest $request, Category $category)
+    public function update(Request $request, Category $category)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+        ]);
+        $category->update($validated);
+        return response()->json([
+            'message'=>'Category updated successfully',
+            'category'=>$category
+        ], 200);
     }
 
     /**
@@ -45,6 +69,9 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        //
+        $category->delete();
+        return response()->json([
+            'message'=>'Category deleted successfully',
+        ], 200);
     }
 }

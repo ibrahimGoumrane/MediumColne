@@ -11,14 +11,15 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $fields = $request->validate([
-            'name' => 'required|max:255',
+            'first_name' => 'required|max:255',
+            'last_name' => 'required|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|confirmed'
         ]);
 
         $user = User::create($fields);
 
-        $token = $user->createToken($request->name);
+        $token = $user->createToken($request->first_name);
 
         return [
             'user' => $user,
@@ -41,12 +42,9 @@ class AuthController extends Controller
                     'email' => ['The provided credentials are incorrect.']
                 ]
             ];
-            // return [
-            //     'message' => 'The provided credentials are incorrect.' 
-            // ];
         }
 
-        $token = $user->createToken($user->name);
+        $token = $user->createToken($user->first_name);
 
         return [
             'user' => $user,
@@ -59,7 +57,7 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
 
         return [
-            'message' => 'You are logged out.' 
+            'message' => 'You are logged out.'
         ];
     }
 }

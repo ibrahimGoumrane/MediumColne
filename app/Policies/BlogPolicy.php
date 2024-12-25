@@ -37,7 +37,8 @@ class BlogPolicy
      */
     public function update(User $user, Blog $blog): Response
     {
-        return $user->id === $blog->user_id
+
+        return $user->id === $blog->creator_id
             ? Response::allow()
             : Response::deny('You do not own this Blog');
     }
