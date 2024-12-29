@@ -10,6 +10,7 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+
         $fields = $request->validate([
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
@@ -47,7 +48,7 @@ class AuthController extends Controller
         $token = $user->createToken($user->first_name);
 
         return [
-            'user' => $user,
+            'user' => $user->load(['blogs', 'comments', 'likes']),
             'token' => $token->plainTextToken
         ];
     }
