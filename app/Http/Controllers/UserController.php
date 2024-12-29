@@ -3,17 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class UserController extends Controller
+class UserController extends Controller implements HasMiddleware
 {
+
+    public static function middleware()
+    {
+        return [
+            new Middleware('auth:sanctum', except: ['index', 'show']),
+        ];
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return User::all();
+        return User::with(['blogs', 'comments', 'likes'])->latest()->get();
     }
 
     /**
@@ -27,9 +36,11 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(User $user)
     {
-        //
+        return response()->json([
+            'user' => $user->load(['blogs', 'comments', 'likes']),
+        ]);
     }
 
     /**
@@ -37,6 +48,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        Gate::authorize('update', $user);
         $validated= $request->validate([
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
@@ -45,7 +57,7 @@ class UserController extends Controller
         $user->update($validated);
         return response()->json([
             'message' => 'User updated successfully.',
-            'user' => $user
+            'user' => $user->load(['blogs', 'comments', 'likes'])
         ], 200);
     }
 
@@ -54,6 +66,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        Gate::authorize('update', $user);
             $user->delete();
             return response()->json([
                 'message' => 'User deleted successfully.',

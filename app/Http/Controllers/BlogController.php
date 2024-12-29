@@ -19,7 +19,7 @@ class BlogController extends Controller implements HasMiddleware
 
     public function index()
     {
-            $blogs = Blog::with(['user', 'likes', 'comments'])->latest()->paginate(10);
+            $blogs = Blog::with(['user', 'likes', 'comments',"categories"])->latest()->paginate(10);
             return response()->json([
                 'message' => 'Blogs retrieved successfully.',
                 'blog' => $blogs,
