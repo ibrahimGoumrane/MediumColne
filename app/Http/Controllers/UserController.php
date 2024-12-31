@@ -57,7 +57,7 @@ class UserController extends Controller implements HasMiddleware
         $user->update($validated);
         return response()->json([
             'message' => 'User updated successfully.',
-            'user' => $user->load(['blogs', 'comments', 'likes'])
+            'user' => $user
         ], 200);
     }
 

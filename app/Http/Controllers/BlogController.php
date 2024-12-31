@@ -27,6 +27,30 @@ class BlogController extends Controller implements HasMiddleware
 
     }
 
+
+    public function search(Request $request)
+    {
+        // Validate the input
+        $validated = $request->validate([
+            'query' => 'nullable|string',
+            'currentPage' => 'nullable|integer|min:1',
+        ]);
+
+        $queryString = $validated['query'] ?? ''; // Default to empty string if no query provided
+        $currentPage = $validated['currentPage'] ?? 1; // Default to page 1 if not provided
+
+        // Get blogs that match the search query, split into 10 results per page
+        $blogs = Blog::where('name', 'like', '%' . $queryString . '%')->latest()
+            ->paginate(10, ['*'], $currentPage);
+
+        // Return the paginated results and the current page
+        return response()->json([
+            'currentPage' => $blogs->currentPage(),
+            'blogs' => $blogs->items(),
+        ]);
+    }
+
+
     public function store(Request $request)
     {
             $validated = $request->validate([
@@ -52,7 +76,7 @@ class BlogController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Blog created successfully.',
-                'blog' => $blog->load(['user', 'likes', 'comments', 'categories']),
+                'blog' => $blog
             ], 201);
 
     }
@@ -90,7 +114,7 @@ class BlogController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Blog updated successfully.',
-                'blog' => $blog->load(['user', 'likes', 'comments', 'categories']),
+                'blog' => $blog
             ], 200);
 
     }
