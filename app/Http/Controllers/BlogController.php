@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class BlogController extends Controller implements HasMiddleware
 {
@@ -80,7 +81,31 @@ class BlogController extends Controller implements HasMiddleware
             ], 201);
 
     }
+    public function uploadImage(Request $request)
+    {
+        // Validate the uploaded image
+        $validated = $request->validate([
+            'blog_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096', // Ensure it's a valid image
+        ]);
 
+        // Handle image upload
+        if ($request->hasFile('blog_image')) {
+            $blogImage = $request->file('blog_image');
+
+            // Generate a unique name for the file
+            $blogImageName = 'uploads/blogs/' . time() . '_' . $blogImage->getClientOriginalName();
+
+            // Save the file to storage
+            Storage::disk('public')->put($blogImageName, file_get_contents($blogImage));
+
+        }
+
+        // Return the updated blog and a success message
+        return response()->json([
+            'message' => 'Image saved successfully.',
+            'url' => '/storage/'.$blogImageName
+        ], 200);
+    }
     public function show(Blog $blog)
     {
             return response()->json([
