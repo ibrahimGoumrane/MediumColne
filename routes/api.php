@@ -16,7 +16,7 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('blogs' , BlogController::class);
 Route::apiResource('categories' , CategoryController::class);
 Route::get('/blogs/search', [BlogController::class, 'search']);
-Route::post('/blog/upload', [BlogController::class, 'uploadImage']);
+Route::post('/blogs/upload', [BlogController::class, 'uploadImage']);
 Route::apiResource('users' , UserController::class);
 Route::apiResource('blogs.comments', CommentController::class);
 Route::apiResource('blogs.likes' , LikeController::class);
