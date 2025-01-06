@@ -18,6 +18,8 @@ Route::apiResource('categories' , CategoryController::class);
 Route::get('/blogs/search', [BlogController::class, 'search']);
 Route::post('/blogs/upload', [BlogController::class, 'uploadImage']);
 Route::apiResource('users' , UserController::class);
+Route::post('/users/{user}/image', [UserController::class, 'uploadProfileImage']);
+Route::post('/users/{user}/password', [UserController::class, 'updatePassword']);
 Route::apiResource('blogs.comments', CommentController::class);
 Route::apiResource('blogs.likes' , LikeController::class);
 
