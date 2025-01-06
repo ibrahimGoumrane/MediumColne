@@ -35,27 +35,53 @@ class BlogController extends Controller implements HasMiddleware
 
     public function search(Request $request)
     {
-        // Validate the input
         $validated = $request->validate([
             'query' => 'nullable|string',
             'currentPage' => 'nullable|integer|min:1',
+            'tags' => 'nullable|array', // Validate tags as an array if provided
+            'tags.*' => 'nullable|string', // Each tag should be a string
         ]);
 
         $queryString = $validated['query'] ?? ''; // Default to empty string if no query provided
         $currentPage = $validated['currentPage'] ?? 1; // Default to page 1 if not provided
+        $tags = $validated['tags'] ?? []; // Default to empty array if no tags provided
 
-        // Get blogs that match the search query, split into 10 results per page
-        $blogs = Blog::where('name', 'like', '%' . $queryString . '%')->latest()
-            ->paginate(10, ['*'], $currentPage);
+        $blogs = null; // Initialize the result variable for blogs
+        $hasMoreBlogs = false; // Initialize flag for more blogs
 
-        // Return the paginated results and the current page
+        // If tags are provided, fetch blogs that match the tags and order by likes count
+        if (!empty($tags)) {
+            $blogsQuery = Blog::with(['user', 'likes', 'categories', 'comments']) // Add relationships to load, including 'comments'
+            ->withCount('likes') // Get the count of likes
+            ->whereHas('categories', function ($query) use ($tags) {
+                $query->whereIn('name', $tags);
+            })
+                ->orderBy('likes_count', 'desc'); // Order by likes count in descending order
+
+            // Fetch blogs and check if there are more
+            $blogs = $blogsQuery->take(11)->get(); // Fetch 11 blogs to check for "hasMoreBlogs"
+            $hasMoreBlogs = $blogs->count() > 10; // If more than 10 blogs are fetched, there are more blogs
+            $blogs = $blogs->take(10); // Limit the result to 10 blogs
+        } else {
+            // Get blogs that match the search query
+            $blogsQuery = Blog::with(['user', 'likes', 'categories', 'comments']); // Add relationships to load, including 'comments'
+
+            if ($queryString) {
+                $blogsQuery->where('title', 'like', '%' . $queryString . '%');
+            }
+
+            $blogsQuery->latest();
+            $blogs = $blogsQuery->paginate(10, ['*'], 'page', $currentPage); // Paginated query
+            $hasMoreBlogs = $blogs->hasMorePages(); // Check if there are more pages
+        }
+
+        // Return the results
         return response()->json([
-            'currentPage' => $blogs->currentPage(),
-            'blogs' => $blogs->with(['user', 'likes',"categories"])->items(),
+            'currentPage' => !empty($tags) ? 1 : $blogs->currentPage(), // If tags are provided, currentPage will always be 1
+            'hasMoreBlogs' => $hasMoreBlogs, // Indicate if there are more blogs
+            'blogs' => !empty($tags) ? $blogs->values() : $blogs->items(), // Use items() for paginated results, directly return $blogs for collections
         ]);
     }
-
-
     public function store(Request $request)
     {
         $validated = $request->validate([
