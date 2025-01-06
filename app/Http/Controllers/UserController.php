@@ -42,7 +42,7 @@ class UserController extends Controller implements HasMiddleware
     public function show(User $user)
     {
         return response()->json([
-            'user' => $user->load(['blogs', 'comments', 'likes']),
+            'user' => $user->load(['blogs', 'comments.blog', 'likes.blog']),
         ]);
     }
     /**
@@ -76,7 +76,7 @@ class UserController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Profile image updated successfully.',
-                'user' => $user,
+                'user' => $user->load(['blogs', 'comments.blog', 'likes.blog']),
             ], 200);
         }
 
@@ -141,7 +141,7 @@ class UserController extends Controller implements HasMiddleware
 
         return response()->json([
             'message' => 'Password updated successfully.',
-            "user" => $user,
+            'user' => $user->load(['blogs', 'comments.blog', 'likes.blog']),
         ], 200);
     }
     public function destroy(User $user)

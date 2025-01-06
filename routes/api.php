@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
-    return $request->user()->load(['blogs','likes', 'comments']);
+    return $request->user()->load(['blogs','likes.blog', 'comments.blog']);
 })->middleware('auth:sanctum');
 
 Route::apiResource('blogs' , BlogController::class);

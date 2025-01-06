@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('blogs', function (Blueprint $table) {
             $table->id();
             $table->string('title')->unique();
-            $table->string('description', 255)->default('');
+            $table->string('description', 255)->nullable();
             $table->text('body');
+            $table->string('preview')->default('/storage/uploads/blogs/default.jpg');
             $table->foreignId('creator_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });

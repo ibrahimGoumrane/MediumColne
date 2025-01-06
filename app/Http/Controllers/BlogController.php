@@ -47,7 +47,7 @@ class BlogController extends Controller implements HasMiddleware
         // Return the paginated results and the current page
         return response()->json([
             'currentPage' => $blogs->currentPage(),
-            'blogs' => $blogs->items(),
+            'blogs' => $blogs->with(['user', 'likes',"categories"])->items(),
         ]);
     }
 
@@ -58,6 +58,7 @@ class BlogController extends Controller implements HasMiddleware
                 'title' => 'required|string|unique:blogs,title|max:255',
                 'description' => 'nullable|string|max:500',
                 'body' => 'required|string',
+                "preview" => "required|string",
                 'category_id' => 'array',
                 'category_id.*' => 'exists:categories,id',
             ]);
@@ -68,6 +69,7 @@ class BlogController extends Controller implements HasMiddleware
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
                 'body' => $validated['body'],
+                'preview' => $validated['preview'],
                 'creator_id' => $user->id,
             ]);
 
@@ -77,7 +79,7 @@ class BlogController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Blog created successfully.',
-                'blog' => $blog
+                'blog' => $blog->with(['user', 'likes',"categories"])->first(),
             ], 201);
 
     }
@@ -123,6 +125,7 @@ class BlogController extends Controller implements HasMiddleware
                 'title' => 'required|string|max:255|unique:blogs,title,' . $blog->id,
                 'description' => 'nullable|string|max:500',
                 'body' => 'required|string',
+                'preview' => "required|string",
                 'category_id' => 'array',
                 'category_id.*' => 'exists:categories,id',
             ]);
@@ -131,6 +134,7 @@ class BlogController extends Controller implements HasMiddleware
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
                 'body' => $validated['body'],
+                'preview' => $validated['preview'],
             ]);
 
             if (!empty($validated['category_id'])) {
@@ -139,24 +143,24 @@ class BlogController extends Controller implements HasMiddleware
 
             return response()->json([
                 'message' => 'Blog updated successfully.',
-                'blog' => $blog
+                'blog' => $blog->load(['user', 'likes',"categories"])->first(),
             ], 200);
 
     }
 
     public function destroy(Blog $blog)
     {
-            Gate::authorize('update', $blog);
+        Gate::authorize('update', $blog);
+        if ($blog->preview) {
+            $previewPath = str_replace('/storage/', '', $blog->preview); // Remove the '/storage/' prefix to get the relative path
+            Storage::disk('public')->delete($previewPath);
+        }
+        $blog->delete();
 
-            $blog->delete();
-
-            return response()->json([
+        return response()->json([
                 'message' => 'Blog deleted successfully.',
             ], 200);
     }
 
-    /**
-     * Handle exceptions and format error responses.
-     */
 
 }
