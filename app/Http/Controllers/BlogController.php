@@ -54,36 +54,42 @@ class BlogController extends Controller implements HasMiddleware
 
     public function store(Request $request)
     {
-            $validated = $request->validate([
-                'title' => 'required|string|unique:blogs,title|max:255',
-                'description' => 'nullable|string|max:500',
-                'body' => 'required|string',
-                "preview" => "required|string",
-                'category_id' => 'array',
-                'category_id.*' => 'exists:categories,id',
-            ]);
+        $validated = $request->validate([
+            'title' => 'required|string|unique:blogs,title|max:255',
+            'description' => 'nullable|string|max:500',
+            'body' => 'required|string',
+            'preview' => 'required|string',
+            'categories' => 'required|array', // Ensure categories is an array
+            'categories.*' => 'required|string|max:255', // Each category must be a string
+        ]);
 
-            $user = $request->user();
+        $user = $request->user();
 
-            $blog = Blog::create([
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'body' => $validated['body'],
-                'preview' => $validated['preview'],
-                'creator_id' => $user->id,
-            ]);
+        $blog = Blog::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'body' => $validated['body'],
+            'preview' => $validated['preview'],
+            'creator_id' => $user->id,
+        ]);
 
-            if (!empty($validated['category_id'])) {
-                $blog->categories()->sync($validated['category_id']);
-            }
+        // Process categories
+        $categoryNames = array_map('trim', $validated['categories']); // Trim each category name
+        $categoryIds = []; // Store category IDs here
 
-            return response()->json([
-                'message' => 'Blog created successfully.',
-                'blog' => $blog->with(['user', 'likes',"categories"])->first(),
-            ], 201);
+        foreach ($categoryNames as $name) {
+            $category = \App\Models\Category::firstOrCreate(['name' => $name]); // Check if category exists, otherwise create
+            $categoryIds[] = $category->id; // Collect category ID
+        }
 
-    }
-    public function uploadImage(Request $request)
+        // Sync categories to the blog
+        $blog->categories()->sync($categoryIds);
+
+        return response()->json([
+            'message' => 'Blog created successfully.',
+            'blog' => $blog->load(['user', 'likes', 'categories']), // Load required relationships
+        ], 201);
+    }    public function uploadImage(Request $request)
     {
         // Validate the uploaded image
         $validated = $request->validate([
@@ -119,33 +125,41 @@ class BlogController extends Controller implements HasMiddleware
 
     public function update(Request $request, Blog $blog)
     {
-            Gate::authorize('update', $blog);
+        Gate::authorize('update', $blog);
 
-            $validated = $request->validate([
-                'title' => 'required|string|max:255|unique:blogs,title,' . $blog->id,
-                'description' => 'nullable|string|max:500',
-                'body' => 'required|string',
-                'preview' => "required|string",
-                'category_id' => 'array',
-                'category_id.*' => 'exists:categories,id',
-            ]);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255|unique:blogs,title,' . $blog->id,
+            'description' => 'nullable|string|max:500',
+            'body' => 'required|string',
+            'preview' => 'required|string',
+            'categories' => 'required|array', // Ensure categories field is an array
+            'categories.*' => 'required|string|max:255', // Each category must be a string
+        ]);
 
-            $blog->update([
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'body' => $validated['body'],
-                'preview' => $validated['preview'],
-            ]);
+        // Update the blog details
+        $blog->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'body' => $validated['body'],
+            'preview' => $validated['preview'],
+        ]);
 
-            if (!empty($validated['category_id'])) {
-                $blog->categories()->sync($validated['category_id']);
-            }
+        // Process categories
+        $categoryNames = array_map('trim', $validated['categories']); // Trim whitespace from each category name
+        $categoryIds = []; // Array to hold category IDs
 
-            return response()->json([
-                'message' => 'Blog updated successfully.',
-                'blog' => $blog->load(['user', 'likes',"categories"])->first(),
-            ], 200);
+        foreach ($categoryNames as $name) {
+            $category = \App\Models\Category::firstOrCreate(['name' => $name]); // Check if a category exists or create a new one
+            $categoryIds[] = $category->id; // Collect the category ID
+        }
 
+        // Sync the blog's categories
+        $blog->categories()->sync($categoryIds); // Ensure only the provided categories are linked
+
+        return response()->json([
+            'message' => 'Blog updated successfully.',
+            'blog' => $blog->load(['user', 'likes', 'categories']), // Load the necessary relationships
+        ], 200);
     }
 
     public function destroy(Blog $blog)
