@@ -28,9 +28,8 @@ class CommentController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request , Blog $blog)
+    public function store(Request $request, Blog $blog)
     {
-
         $validated = $request->validate([
             'content' => 'required',
         ]);
@@ -39,9 +38,13 @@ class CommentController extends Controller implements HasMiddleware
             'content' => $validated['content'],
             'user_id' => $user->id,
         ]);
+
+        // Load the user relationship for the created comment
+        $comment->load('user');
+
         return response()->json([
-            'message'=>'Comment created successfully',
-            'comment'=>$comment->with(['user'])->first()
+            'message' => 'Comment created successfully',
+            'comment' => $comment
         ], 201);
     }
 

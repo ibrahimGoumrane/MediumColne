@@ -119,7 +119,8 @@ class BlogController extends Controller implements HasMiddleware
             'message' => 'Blog created successfully.',
             'blog' => $blog->load(['user', 'likes', 'categories']), // Load required relationships
         ], 201);
-    }    public function uploadImage(Request $request)
+    }
+    public function uploadImage(Request $request)
     {
         // Validate the uploaded image
         $validated = $request->validate([
@@ -148,7 +149,7 @@ class BlogController extends Controller implements HasMiddleware
     {
             return response()->json([
                 'message' => 'Blog retrieved successfully.',
-                'blog' => $blog->load(['user', 'likes', 'comments', 'categories']),
+                'blog' => $blog->load(['user', 'likes.user', 'comments.user', 'categories']),
             ], 200);
 
     }
