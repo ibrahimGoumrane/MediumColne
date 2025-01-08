@@ -17,7 +17,7 @@ class UserController extends Controller implements HasMiddleware
     public static function middleware()
     {
         return [
-            new Middleware('auth:sanctum', except: ['index', 'show']),
+            new Middleware('auth:sanctum', except: ['index']),
         ];
     }
     /**
@@ -42,7 +42,19 @@ class UserController extends Controller implements HasMiddleware
     public function show(User $user)
     {
         return response()->json([
-            'user' => $user->load(['blogs', 'comments.blog', 'likes.blog']),
+            'user' => $user->load([
+                'blogs.comments.user',
+                'blogs.likes.user',
+                'blogs.user',
+                'blogs.categories',
+                'likes.blog.user', // Include the creator of liked blogs
+                'likes.blog.comments' ,// Include the categories of liked blogs
+                'likes.blog.likes' ,
+                'comments.blog.user', // Include the creator of commented blogs
+                'comments.blog.comments.user' ,// Include the categories of commented blogs
+                'comments.blog.likes.user' ,
+                'comments.user'
+            ]),
         ]);
     }
     /**

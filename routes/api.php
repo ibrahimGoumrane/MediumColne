@@ -6,12 +6,14 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CommentController;
 use \App\Http\Controllers\LikeController;
 use App\Http\Controllers\UserController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
-    return $request->user()->load(['blogs','likes.blog', 'comments.blog']);
+    return $request->user();
 })->middleware('auth:sanctum');
+
 
 Route::apiResource('blogs' , BlogController::class);
 Route::apiResource('categories' , CategoryController::class);
