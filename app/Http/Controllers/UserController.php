@@ -25,7 +25,9 @@ class UserController extends Controller implements HasMiddleware
      */
     public function index()
     {
-        return User::with(['blogs', 'comments', 'likes'])->latest()->get();
+        return User::latest()
+                   ->get()
+                   ->makeHidden(['blogs', 'comments', 'likes']);
     }
 
     /**
@@ -57,6 +59,38 @@ class UserController extends Controller implements HasMiddleware
             ]),
         ]);
     }
+
+        /**
+     * Search for users by first name, last name, or email.
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        $users = User::where('first_name', 'LIKE', "%{$query}%")
+                     ->orWhere('last_name', 'LIKE', "%{$query}%")
+                     ->orWhere('email', 'LIKE', "%{$query}%")
+                     ->select('id', 'first_name', 'last_name', 'email', 'profile_image', 'role', 'account_locked')
+                     ->latest()
+                     ->get();
+
+        return response()->json($users);
+    }
+
+    /**
+     * Toggle the account_locked status of a user.
+     */
+    public function lock(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $user->account_locked = !$user->account_locked;
+        $user->save();
+
+        return response()->json([
+            'user' => $user
+        ]);
+    }
+
     /**
      * Update the specified image of the user
      */

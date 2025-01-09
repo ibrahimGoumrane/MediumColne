@@ -20,6 +20,8 @@ Route::apiResource('categories' , CategoryController::class);
 Route::post('/blogs/search', [BlogController::class, 'search']);
 Route::post('/blogs/upload', [BlogController::class, 'uploadImage']);
 Route::apiResource('users' , UserController::class);
+Route::get('/users/search', [UserController::class, 'search']);
+Route::post('/users/lock/{id}', [UserController::class, 'lock']);
 Route::post('/users/{user}/image', [UserController::class, 'uploadProfileImage']);
 Route::post('/users/{user}/password', [UserController::class, 'updatePassword']);
 Route::apiResource('blogs.comments', CommentController::class);
