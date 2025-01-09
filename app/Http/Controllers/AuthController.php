@@ -78,6 +78,12 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            if ($user->account_locked) {
+                return response()->json([
+                    'message' => "Your account is locked. Please contact support."
+                ], 423); // 423 Locked
+            }
+
             $token = $user->createToken($user->first_name);
 
             return response()->json([
