@@ -46,9 +46,11 @@ class BlogPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Blog $blog): bool
+    public function delete(User $user, Blog $blog): Response
     {
-        //
+        return $user->id === $blog->creator_id || $user->role === 'admin'
+         ? Response::allow()
+         : Response::deny('You are not allowed to delete this blog');
     }
 
     /**

@@ -195,7 +195,7 @@ class BlogController extends Controller implements HasMiddleware
 
     public function destroy(Blog $blog)
     {
-        Gate::authorize('update', $blog);
+        Gate::authorize('delete', $blog);
         if ($blog->preview) {
             $previewPath = str_replace('/storage/', '', $blog->preview); // Remove the '/storage/' prefix to get the relative path
             Storage::disk('public')->delete($previewPath);
