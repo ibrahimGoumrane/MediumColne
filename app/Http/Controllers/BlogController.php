@@ -22,14 +22,14 @@ class BlogController extends Controller implements HasMiddleware
     {
         $blogs = Blog::with(['user', 'categories'])
             ->withCount(['likes', 'comments'])
+            ->orderBy('likes_count', 'desc') // Sort by like count in descending order
             ->latest()
             ->paginate(10);
 
         return response()->json([
             'message' => 'Blogs retrieved successfully.',
-            'blog' => $blogs,
+            'blogs' => $blogs, // Corrected key from 'blog' to 'blogs'
         ], 200);
-
     }
 
 
@@ -52,10 +52,10 @@ class BlogController extends Controller implements HasMiddleware
         // If tags are provided, fetch blogs that match the tags and order by likes count
         if (!empty($tags)) {
             $blogsQuery = Blog::with(['user', 'likes', 'categories', 'comments']) // Add relationships to load, including 'comments'
-            ->withCount('likes') // Get the count of likes
-            ->whereHas('categories', function ($query) use ($tags) {
-                $query->whereIn('name', $tags);
-            })
+                ->withCount('likes') // Get the count of likes
+                ->whereHas('categories', function ($query) use ($tags) {
+                    $query->whereIn('name', $tags);
+                })
                 ->orderBy('likes_count', 'desc'); // Order by likes count in descending order
 
             // Fetch blogs and check if there are more
@@ -64,13 +64,14 @@ class BlogController extends Controller implements HasMiddleware
             $blogs = $blogs->take(10); // Limit the result to 10 blogs
         } else {
             // Get blogs that match the search query
-            $blogsQuery = Blog::with(['user', 'likes', 'categories', 'comments']); // Add relationships to load, including 'comments'
+            $blogsQuery = Blog::with(['user', 'likes', 'categories', 'comments']) // Add relationships to load, including 'comments'
+                ->withCount('likes') // Get the count of likes
+                ->orderBy('likes_count', 'desc'); // Order by likes count in descending order
 
             if ($queryString) {
                 $blogsQuery->where('title', 'like', '%' . $queryString . '%');
             }
 
-            $blogsQuery->latest();
             $blogs = $blogsQuery->paginate(10, ['*'], 'page', $currentPage); // Paginated query
             $hasMoreBlogs = $blogs->hasMorePages(); // Check if there are more pages
         }
@@ -82,6 +83,7 @@ class BlogController extends Controller implements HasMiddleware
             'blogs' => !empty($tags) ? $blogs->values() : $blogs->items(), // Use items() for paginated results, directly return $blogs for collections
         ]);
     }
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
